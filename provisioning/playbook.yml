@@ -1,0 +1,36 @@
+---
+- hosts: all
+  sudo: true
+
+  roles:
+    - common
+    - nginx
+
+  post_tasks:
+    - name: create the demo site
+      copy: src=files/nginx-site.j2 dest=/etc/nginx/sites-available/demo
+      tags: nginx
+
+    - name: enable the demo site
+      file: src=/etc/nginx/sites-available/demo dest=/etc/nginx/sites-enabled/demo state=link
+      tags: nginx
+
+    - name: disabled the default nginx-site
+      file: path=/etc/nginx-sites-enables/dummy state=absent
+      tags: nginx
+
+    - name: reload the nginx conf
+      service: name=nginx state=reloaded
+      tags: nginx
+
+    - name: install basic packages
+      apt: pkg={{ item }} state=present
+      with_items:
+        - python-dev
+        - python-pip
+
+    - name: install jade with npm instead of apt
+      npm: name=jade state=present global=yes
+
+    - name: fix the nodejs link in ubuntu
+      file: src=/usr/bin/nodejs dest=/usr/bin/node state=link
